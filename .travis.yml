@@ -1,0 +1,23 @@
+sudo: required
+language: generic 
+
+services:
+  - docker
+
+before_install:
+  - docker build -t resdeni/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true resdeni/react-test npm test -- --coverage
+
+
+after_success:
+  - docker build -t resdeni/multi-client ./client
+  - docker build -t resdeni/multi-nginx ./nginx
+  - docker build -t resdeni/multi-server ./server
+  - docker build -t resdeni/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" |  docker login -u "$DOCKER_ID" --password-stdin
+  - docker push resdeni/multi-client
+  - docker push resdeni/multi-nginx
+  - docker push resdeni/multi-server
+  - docker push resdeni/multi-worker
